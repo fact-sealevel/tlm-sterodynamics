@@ -6,7 +6,7 @@ import re
 import argparse
 import fnmatch
 from IncludeCMIP6Models import IncludeCMIP6Models
-from IncludeCMIP6ZOSModels import *
+from IncludeCMIP6ZOSModels import IncludeCMIP6ZOSModels
 from SmoothZOSTOGA import SmoothZOSTOGA
 import cftime
 from netCDF4 import Dataset
