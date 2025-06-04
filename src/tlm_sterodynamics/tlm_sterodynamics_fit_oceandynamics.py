@@ -20,8 +20,9 @@ def tlm_fit_oceandynamics(pipeline_id):
     configfile = "{}_config.pkl".format(pipeline_id)
     try:
         f = open(configfile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open configuration file\n")
+        raise e
 
     # Extract the configuration variables
     my_config = pickle.load(f)
@@ -39,8 +40,9 @@ def tlm_fit_oceandynamics(pipeline_id):
     zostogafile = "{}_ZOSTOGA.pkl".format(pipeline_id)
     try:
         f = open(zostogafile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open ZOSTOGA file\n")
+        raise e
 
     # Extract the ZOSTOGA variables
     my_zostoga = pickle.load(f)
@@ -53,8 +55,9 @@ def tlm_fit_oceandynamics(pipeline_id):
     zosfile = "{}_ZOS.pkl".format(pipeline_id)
     try:
         f = open(zosfile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open ZOS file\n")
+        raise e
 
     # Extract the ZOS variables
     my_zos = pickle.load(f)

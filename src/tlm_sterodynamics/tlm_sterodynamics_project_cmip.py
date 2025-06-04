@@ -30,8 +30,9 @@ def tlm_project_cmip(nsamps, seed, pipeline_id):
     configfile = "{}_config.pkl".format(pipeline_id)
     try:
         f = open(configfile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open configuration file\n")
+        raise e
 
     # Extract the configuration variables
     my_config = pickle.load(f)
@@ -46,8 +47,9 @@ def tlm_project_cmip(nsamps, seed, pipeline_id):
     configfile = "{}_ZOSTOGA.pkl".format(pipeline_id)
     try:
         f = open(configfile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open ZOSTOGA file\n")
+        raise e
 
     # Extract the ZOSTOGA variables
     my_data = pickle.load(f)
@@ -60,8 +62,9 @@ def tlm_project_cmip(nsamps, seed, pipeline_id):
     fitfile = "{}_thermalexp_fit.pkl".format(pipeline_id)
     try:
         f = open(fitfile, "rb")
-    except:
+    except Exception as e:
         print("Cannot open fit file\n")
+        raise e
 
     # Extract the fit variables
     my_fit = pickle.load(f)

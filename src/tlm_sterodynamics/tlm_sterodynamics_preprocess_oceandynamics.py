@@ -105,7 +105,9 @@ def tas_limit_filter(
         )[0]
         try:
             nc_hist = Dataset(os.path.join(tasdir, this_modeldir, hist_filename), "r")
-        except:
+        except Exception as e:
+            # TODO: Catching and continuing exception for unknown reason, so printing message to make it clear until we can get this cleaned up and more focused.
+            print(f"Caught exception {e} but continuing...")
             continue
 
         # Get the years out of the historical file

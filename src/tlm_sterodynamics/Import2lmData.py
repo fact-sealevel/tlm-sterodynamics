@@ -84,12 +84,13 @@ def Import2lmData(
             try:
                 these_samps = hf[this_scenario][variable][()]
                 these_temp_samps = hf[this_scenario]["surface_temperature"][()]
-            except:
-                raise Exception(
+            except Exception as e:
+                print(
                     "Cannot extract data for this combination: {} - {}".format(
                         scenario, variable
                     )
                 )
+                raise e
 
             # Append these samples to the main samps array
             samps.extend(these_samps.T)
@@ -106,12 +107,13 @@ def Import2lmData(
     else:
         try:
             samps = hf[scenario][variable][()]
-        except:
-            raise Exception(
+        except Exception as e:
+            print(
                 "Cannot extract data for this combination: {} - {}".format(
                     scenario, variable
                 )
             )
+            raise e
         years = np.arange(1750, 1750 + samps.shape[0])
 
     # Calculate the reference period values (mean between refyear_start and refyear_end inclusive)

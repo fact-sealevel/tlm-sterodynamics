@@ -54,8 +54,9 @@ def tlm_project_thermalexpansion(
     data_file = "{}_tlmdata.pkl".format(pipeline_id)
     try:
         f = open(data_file, "rb")
-    except:
+    except Exception as e:
         print("Cannot open data file\n")
+        raise e
 
     # Extract the data variables
     my_data = pickle.load(f)
@@ -69,8 +70,9 @@ def tlm_project_thermalexpansion(
     data_file = "{}_tlmfit.pkl".format(pipeline_id)
     try:
         f = open(data_file, "rb")
-    except:
+    except Exception as e:
         print("Cannot open data file\n")
+        raise e
 
     # Extract the data variables
     my_data = pickle.load(f)

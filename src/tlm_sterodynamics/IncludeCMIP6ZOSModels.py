@@ -258,7 +258,6 @@ def IncludeCMIP6ZOSModels(
 
 
 if __name__ == "__main__":
-
     modeldir = "./data/cmip6/zos"
     varname = "zos"
     datayears = np.arange(1861, 2300)
