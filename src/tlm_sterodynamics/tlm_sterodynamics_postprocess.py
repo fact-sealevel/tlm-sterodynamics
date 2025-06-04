@@ -77,11 +77,6 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
     my_data = pickle.load(f)
     f.close()
 
-    ThermExpMean = my_data["ThermExpMean"]
-    ThermExpStd = my_data["ThermExpStd"]
-    ThermExpYears = my_data["ThermExpYears"]
-    ThermExpN = my_data["ThermExpN"]
-
     # Read in the OD fit data file --------------------------------
     infile = "{}_oceandynamics_fit.pkl".format(pipeline_id)
     try:
@@ -120,8 +115,7 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
     rng = np.random.default_rng(rng_seed)
     quantile_samps = rng.permutation(quantile_samps)
 
-    # Get the number of years and locations
-    nyears = len(targyears)
+    # Get the number of locations
     nsites = len(site_ids)
 
     # Determine the thermal expansion scale coefficient
@@ -131,7 +125,6 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
     od_year_ind = np.array([np.argmin(np.abs(OceanDynYears - x)) for x in targyears])[
         :, np.newaxis
     ]
-    te_year_ind = np.array([np.argmin(np.abs(ThermExpYears - x)) for x in targyears])
 
     # Define the missing value for the netCDF files
     nc_missing_value = np.nan  # np.iinfo(np.int16).min
@@ -264,8 +257,8 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
     )
 
     # Define Dimensions
-    site_dim = rootgrp.createDimension("nsites", nsites)
-    odyear_dim = rootgrp.createDimension("OceanDynYears", len(OceanDynYears))
+    _ = rootgrp.createDimension("nsites", nsites)
+    _ = rootgrp.createDimension("OceanDynYears", len(OceanDynYears))
 
     # Populate dimension variables
     lat_var = rootgrp.createVariable("lat", "f4", ("nsites",))

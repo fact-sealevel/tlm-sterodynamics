@@ -29,10 +29,6 @@ def tlm_fit_oceandynamics(pipeline_id):
     f.close()
 
     datayears = my_config["datayears"]
-    mergeZOSZOSTOGA = my_config["mergeZOSZOSTOGA"]
-    smoothwin = my_config["smoothwin"]
-    driftcorr = my_config["driftcorr"]
-    baseyear = my_config["baseyear"]
     no_correlation = my_config["no_correlation"]
     maxDOF = my_config["maxDOF"]
 
@@ -49,7 +45,6 @@ def tlm_fit_oceandynamics(pipeline_id):
     f.close()
 
     sZOSTOGA = my_zostoga["sZOSTOGA"]
-    zostoga_modellist = my_zostoga["zostoga_modellist"]
 
     # Load the ZOS file
     zosfile = "{}_ZOS.pkl".format(pipeline_id)
@@ -65,10 +60,7 @@ def tlm_fit_oceandynamics(pipeline_id):
 
     sZOS = my_zos["sZOS"]
     sZOSTOGAadj = my_zos["sZOSTOGAadj"]
-    focus_site_lats = my_zos["focus_site_lats"]
     focus_site_ids = my_zos["focus_site_ids"]
-    comb_modellist = my_zos["comb_modellist"]
-    zos_modellist = my_zos["zos_modellist"]
 
     # Subset of data years
     year_idx = np.flatnonzero(np.logical_and(datayears > 2000, datayears <= 2300))

@@ -128,10 +128,10 @@ def tlm_project_cmip(nsamps, seed, pipeline_id):
     rootgrp = Dataset(nc_filename, "w", format="NETCDF4")
 
     # Define Dimensions
-    year_dim = rootgrp.createDimension("years", len(targyears))
-    samp_dim = rootgrp.createDimension("samples", nsamps)
-    teyear_dim = rootgrp.createDimension("ThermExpYears", len(ThermExpYears))
-    loc_dim = rootgrp.createDimension("locations", 1)
+    _ = rootgrp.createDimension("years", len(targyears))
+    _ = rootgrp.createDimension("samples", nsamps)
+    _ = rootgrp.createDimension("ThermExpYears", len(ThermExpYears))
+    _ = rootgrp.createDimension("locations", 1)
 
     # Populate dimension variables
     year_var = rootgrp.createVariable("years", "i4", ("years",))

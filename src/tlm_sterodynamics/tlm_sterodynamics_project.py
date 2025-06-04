@@ -129,9 +129,9 @@ def tlm_project_thermalexpansion(
 
     # Define Dimensions
     nyr = len(targyears)
-    year_dim = rootgrp.createDimension("years", nyr)
-    samp_dim = rootgrp.createDimension("samples", nsamps)
-    loc_dim = rootgrp.createDimension("locations", 1)
+    _ = rootgrp.createDimension("years", nyr)
+    _ = rootgrp.createDimension("samples", nsamps)
+    _ = rootgrp.createDimension("locations", 1)
 
     # Populate dimension variables
     year_var = rootgrp.createVariable("years", "i4", ("years",))
