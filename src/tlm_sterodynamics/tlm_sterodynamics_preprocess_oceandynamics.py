@@ -8,6 +8,7 @@ import fnmatch
 from IncludeCMIP6Models import IncludeCMIP6Models
 from IncludeCMIP6ZOSModels import *
 from SmoothZOSTOGA import SmoothZOSTOGA
+import cftime
 
 # from DriftCorr import DriftCorr
 from read_locationfile import ReadLocationFile
