@@ -9,6 +9,7 @@ from IncludeCMIP6Models import IncludeCMIP6Models
 from IncludeCMIP6ZOSModels import *
 from SmoothZOSTOGA import SmoothZOSTOGA
 import cftime
+from netCDF4 import Dataset
 
 # from DriftCorr import DriftCorr
 from read_locationfile import ReadLocationFile
