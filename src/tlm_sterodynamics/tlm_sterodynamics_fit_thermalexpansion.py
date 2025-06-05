@@ -1,23 +1,10 @@
 import numpy as np
 import os
 import sys
-import pickle
 import argparse
 
 
-def tlm_fit_thermalexpansion(pipeline_id):
-    # Load the preprocessed data
-    data_file = "{}_tlmdata.pkl".format(pipeline_id)
-    try:
-        f = open(data_file, "rb")
-    except Exception as e:
-        print("Cannot open data file\n")
-        raise e
-
-    # Extract the data variables
-    my_data = pickle.load(f)
-    f.close()
-
+def tlm_fit_thermalexpansion(my_data):
     expcoefs = my_data["expcoefs"]
     rmses = my_data["rmses"]
     expcoefs_models = my_data["expcoefs_models"]
@@ -49,14 +36,7 @@ def tlm_fit_thermalexpansion(pipeline_id):
         "include_models": include_models,
         "pb_clip": pb_clip,
     }
-
-    # Write the configuration to a file
-    outdir = os.path.dirname(__file__)
-    outfile = open(os.path.join(outdir, "{}_tlmfit.pkl".format(pipeline_id)), "wb")
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
-
-    return None
+    return output
 
 
 if __name__ == "__main__":

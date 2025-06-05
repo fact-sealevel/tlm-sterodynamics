@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import sys
 import h5py
 import re
@@ -56,7 +55,6 @@ handled in another script.
 def Import2lmData(
     variable="surface_temperature",
     scenario="ssp585",
-    directory="./",
     refyear_start=1995,
     refyear_end=2014,
     twinyear_start=2020,
@@ -64,8 +62,7 @@ def Import2lmData(
     climate_fname="twolayer_SSPs.h5",
 ):
     # Open the SSP hdf5 file
-    sspfile = os.path.join(directory, climate_fname)
-    hf = h5py.File(sspfile, "r")
+    hf = h5py.File(climate_fname, "r")
 
     # Do we have a temperature target scenario?
     scenario_test = re.search("^tlim(\d*\.?\d+)win(\d*\.?\d+)$", scenario)

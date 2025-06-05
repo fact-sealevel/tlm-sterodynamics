@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import sys
 import os
 import argparse
@@ -27,7 +26,17 @@ post-processing stage when run within FACTS.
 
 
 def tlm_project_thermalexpansion(
-    seed, nsamps, pipeline_id, scenario, pyear_start, pyear_end, pyear_step, baseyear
+    preprocessed_data,
+    fit_data,
+    seed,
+    nsamps,
+    pipeline_id,
+    scenario,
+    pyear_start,
+    pyear_end,
+    pyear_step,
+    baseyear,
+    output_gslr_file,
 ):
     """
     # Load the configuration file
@@ -50,37 +59,13 @@ def tlm_project_thermalexpansion(
     # Set the RNG seed
     rng = np.random.default_rng(seed)
 
-    # Load the preprocessed data
-    data_file = "{}_tlmdata.pkl".format(pipeline_id)
-    try:
-        f = open(data_file, "rb")
-    except Exception as e:
-        print("Cannot open data file\n")
-        raise e
+    ohc_samps = preprocessed_data["ohc_samps"]
+    scenario = preprocessed_data["scenario"]
+    data_years = preprocessed_data["data_years"]
 
-    # Extract the data variables
-    my_data = pickle.load(f)
-    f.close()
-
-    ohc_samps = my_data["ohc_samps"]
-    scenario = my_data["scenario"]
-    data_years = my_data["data_years"]
-
-    # Load the Fitted data
-    data_file = "{}_tlmfit.pkl".format(pipeline_id)
-    try:
-        f = open(data_file, "rb")
-    except Exception as e:
-        print("Cannot open data file\n")
-        raise e
-
-    # Extract the data variables
-    my_data = pickle.load(f)
-    f.close()
-
-    mean_expcoefs = my_data["mean_expcoefs"]
-    std_expcoefs = my_data["std_expcoefs"]
-    include_models = my_data["include_models"]
+    mean_expcoefs = fit_data["mean_expcoefs"]
+    std_expcoefs = fit_data["std_expcoefs"]
+    include_models = fit_data["include_models"]
 
     # Generate indices that sample from OHC values
     # ohc_samps_idx = rng.choice(np.arange(ohc_samps.shape[0]), nsamps)
@@ -112,20 +97,9 @@ def tlm_project_thermalexpansion(
         "include_models": include_models,
         "scenario": scenario,
     }
-    outfile = open(
-        os.path.join(
-            os.path.dirname(__file__), "{}_projections.pkl".format(pipeline_id)
-        ),
-        "wb",
-    )
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
 
     # Write the total global projections to a netcdf file
-    nc_filename = os.path.join(
-        os.path.dirname(__file__), "{0}_globalsl.nc".format(pipeline_id)
-    )
-    rootgrp = Dataset(nc_filename, "w", format="NETCDF4")
+    rootgrp = Dataset(output_gslr_file, "w", format="NETCDF4")
 
     # Define Dimensions
     nyr = len(targyears)
@@ -169,7 +143,7 @@ def tlm_project_thermalexpansion(
     # Close the netcdf
     rootgrp.close()
 
-    return None
+    return output
 
 
 if __name__ == "__main__":

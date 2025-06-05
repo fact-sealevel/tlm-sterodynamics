@@ -1,4 +1,3 @@
-import pickle
 import os
 import sys
 import argparse
@@ -24,25 +23,24 @@ pipeline_id = Unique identifier for the pipeline running this code
 """
 
 
-def tlm_preprocess_thermalexpansion(scenario, pipeline_id, fname):
-    # Working directory
-    path = os.path.dirname(__file__)
-
+def tlm_preprocess_thermalexpansion(
+    scenario, pipeline_id, fname, expansion_coefficients_file, gsat_rmses_file
+):
     # Load the ocean heat content
-    ohc_dict = Import2lmData("ocean_heat_content", scenario, path, climate_fname=fname)
+    ohc_dict = Import2lmData("ocean_heat_content", scenario, climate_fname=fname)
 
     # Extract the ohc samples
     ohc_samps = ohc_dict["samples"] * 1e-24
     data_years = ohc_dict["years"]
 
     # Load expansion coefficients
-    nc = Dataset(os.path.join(path, "scmpy2LM_RCMIP_CMIP6calpm_n18_expcoefs.nc"), "r")
+    nc = Dataset(expansion_coefficients_file, "r")
     expcoefs = nc.variables["expcoefs"][...]
     expcoefs_models = nc.variables["model"][...]
     nc.close()
 
     # Load GSAT RMSEs
-    nc = Dataset(os.path.join(path, "scmpy2LM_RCMIP_CMIP6calpm_n17_gsat_rmse.nc"), "r")
+    nc = Dataset(gsat_rmses_file, "r")
     rmses = nc.variables["gsat_rmse"][...]
     rmses_models = nc.variables["model"][...]
     nc.close()
@@ -58,13 +56,7 @@ def tlm_preprocess_thermalexpansion(scenario, pipeline_id, fname):
         "scenario": scenario,
     }
 
-    # Write the configuration to a file
-    outdir = os.path.dirname(__file__)
-    outfile = open(os.path.join(outdir, "{}_tlmdata.pkl".format(pipeline_id)), "wb")
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
-
-    return None
+    return output
 
 
 if __name__ == "__main__":
