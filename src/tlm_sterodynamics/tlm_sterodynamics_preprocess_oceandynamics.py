@@ -5,15 +5,15 @@ import sys
 import re
 import argparse
 import fnmatch
-from IncludeCMIP6Models import IncludeCMIP6Models
-from IncludeCMIP6ZOSModels import IncludeCMIP6ZOSModels
-from SmoothZOSTOGA import SmoothZOSTOGA
+from tlm_sterodynamics.IncludeCMIP6Models import IncludeCMIP6Models
+from tlm_sterodynamics.IncludeCMIP6ZOSModels import IncludeCMIP6ZOSModels
+from tlm_sterodynamics.SmoothZOSTOGA import SmoothZOSTOGA
 import cftime
 from netCDF4 import Dataset
 
 # from DriftCorr import DriftCorr
-from read_locationfile import ReadLocationFile
-from Smooth import Smooth
+from tlm_sterodynamics.read_locationfile import ReadLocationFile
+from tlm_sterodynamics.Smooth import Smooth
 
 """ tlm_preprocess_oceandynamics.py
 

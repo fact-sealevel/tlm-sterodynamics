@@ -1,5 +1,5 @@
 import numpy as np
-from Smooth import Smooth
+from tlm_sterodynamics.Smooth import Smooth
 
 """ SmoothZOSTOGA.py
 

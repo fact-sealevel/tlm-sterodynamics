@@ -6,7 +6,7 @@ import argparse
 # from DriftCorr import DriftCorr
 from netCDF4 import Dataset
 
-from Import2lmData import Import2lmData
+from tlm_sterodynamics.Import2lmData import Import2lmData
 
 """ tlm_preprocessthermalexpansion.py
 
