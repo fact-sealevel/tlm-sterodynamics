@@ -4,6 +4,9 @@ Logic for the CLI.
 
 import click
 
+from tlm_sterodynamics.tlm_sterodynamics_fit_oceandynamics import tlm_fit_oceandynamics
+from tlm_sterodynamics.tlm_sterodynamics_postprocess import tlm_postprocess_oceandynamics
+from tlm_sterodynamics.tlm_sterodynamics_preprocess_oceandynamics import tlm_preprocess_oceandynamics
 from tlm_sterodynamics.tlm_sterodynamics_preprocess_thermalexpansion import (
     tlm_preprocess_thermalexpansion,
 )
@@ -141,5 +144,99 @@ def thermal_expansion(
 @tlm_sterodynamics_cli.command(
     help="Project ocean-dynamics contribution to sea-level rise"
 )
-def ocean_dynamics() -> None:
+@click.option(
+    "--pipeline-id",
+    envvar="TLM_STERODYNAMICS_PIPELINE_ID",
+    help="Unique identifier for this instance of the module.",
+    required=True,
+)
+@click.option(
+    "--climate-data-file",
+    envvar="TLM_STERODYNAMICS_CLIMATE_DATA_FILE",
+    help="NetCDF4/HDF5 file containing surface temperature data.",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--expansion-coefficients-file",
+    envvar="TLM_STERODYNAMICS_EXPANSION_COEFFICIENTS_FILE",
+    help="Path to NetCDF file containing expansion coefficients.",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--gsat-rmses-file",
+    envvar="TLM_STERODYNAMICS_GSAT_RMSES_FILE",
+    help="Path to NetCDF file containing GSAT RMSEs.",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--location-file",
+    envvar="TLM_STERODYNAMICS_LOCATION_FILE",
+    help="File containing name, id, lat, and lon of points for localization.",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--scenario",
+    envvar="TLM_STERODYNAMICS_SCENARIO",
+    help="SSP scenario (i.e ssp585) or temperature target (i.e. tlim2.0win0.25).",
+    default="rcp85",
+)
+@click.option(
+    "--scenario-dsl",
+    envvar="TLM_STERODYNAMICS_SCENARIO_DSL",
+    help="SSP scenario to use for correlation of thermal expansion and dynamic sea level, if not the same as scenario.",
+    default="",
+)
+@click.option(
+    "--no-drift-corr",
+    envvar="TLM_STERODYNAMICS_NO_DRIFT_CORR",
+    help="Do not apply the drift correction",
+    default=False,
+)
+@click.option(
+    "--no-correlation",
+    envvar="TLM_STERODYNAMICS_NO_CORRELATION",
+    help="Do not apply the correlation between ZOS and ZOSTOGA fields",
+    default=False,
+)
+@click.option(
+    "--pyear-start",
+    envvar="TLM_STERODYNAMICS_PYEAR_START",
+    help="Year for which projections start.",
+    default=2020,
+)
+@click.option(
+    "--pyear-end",
+    envvar="TLM_STERODYNAMICS_PYEAR_END",
+    help="Year for which projections end.",
+    default=2300,
+)
+@click.option(
+    "--pyear-step",
+    envvar="TLM_STERODYNAMICS_PYEAR_STEP",
+    help="Step size in years between start and end at which projections are produced.",
+    default=10,
+)
+@click.option(
+    "--baseyear",
+    envvar="TLM_STERODYNAMICS_BASEYEAR",
+    help="Base year to which projections are centered.",
+    default=2000,
+)
+def ocean_dynamics(pipeline_id, climate_data_file, expansion_coefficients_file, gsat_rmses_file, location_file, scenario, scenario_dsl, no_drift_corr, no_correlation, pyear_start, pyear_end, pyear_step, baseyear) -> None:
     click.echo("Greetings from ocean-dynamics!")
+    te_pre_data = tlm_preprocess_thermalexpansion(
+        scenario, pipeline_id, climate_data_file, expansion_coefficients_file, gsat_rmses_file
+    )
+
+    if scenario_dsl == "":
+        scenario_dsl = scenario
+    tlm_preprocess_oceandynamics()
+    tlm_fit_thermalexpansion()
+    tlm_fit_oceandynamics()
+    tlm_project_thermalexpansion()
+    tlm_postprocess_oceandynamics()
+
