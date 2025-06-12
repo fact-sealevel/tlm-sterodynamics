@@ -1,3 +1,104 @@
 # tlm-sterodynamics
 
-This module produces thermal expansion and dynamic sea level projections. Thermal expansion is derived from inputted surface air temperature and ocean heat content projections provided from a climate model emulator. Dynamic sea level is estimated based on the correlation between thermal expansion and local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1 9.SM.4.2 and 9.SM.4.3.
+Application producing thermal expansion and dynamic sea level projections. Thermal expansion is derived from inputted surface air temperature and ocean heat content projections provided from a climate model emulator. Dynamic sea level is estimated based on the correlation between thermal expansion and local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1 9.SM.4.2 and 9.SM.4.3.
+
+> [!CAUTION]
+> This is a prototype. It is likely to change in breaking ways. It might delete all your data. Don't use it in production.
+
+## Example
+
+This application can run on data projected climate data. For example, you can use the output `climate.nc` file from the [the fair model container](https://github.com/stcaf-org/fair-temperature). Additional input data is also needed.
+
+First, create a new directory and download required input data and prepare for the run, like
+
+```shell
+# Input data we will pass to the container
+mkdir -p ./data/input
+curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_preprocess_data.tgz | tar -zx -C ./data/input
+
+# Output projections will appear here
+mkdir -p ./data/output
+```
+
+With fair output as an example, drop the `climate.nc` file into `./data/input`.
+
+Now run the container, for example with Docker, like
+
+```shell
+docker run --rm \
+  -v ./data/input:/input/:ro \
+  -v ./data/output:/output \
+  ghcr.io/stcaf-org/tlm-sterodynamics:0.1.0 \
+  --pipeline-id=1234 \
+  --scenario="ssp585" \
+  --nsamps=10 \
+  --output-gslr-file="/output/gslr.nc" \
+  --climate-data-file="/input/climate.nc" \
+  --expansion-coefficients-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n18_expcoefs.nc" \
+  --gsat-rmses-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n17_gsat_rmse.nc"
+```
+
+If the run is successful, the output projection will appear in `./data/output`.
+
+## Features
+
+Several options and configurations are available when running the container.
+
+```
+Usage: tlm-sterodynamics [OPTIONS]
+
+  Application producing thermal expansion and dynamic sea level projections.
+  Thermal expansion is derived from inputted surface air temperature and ocean
+  heat content projections provided from a climate model emulator. Dynamic sea
+  level is estimated based on the correlation between thermal expansion and
+  local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1
+  9.SM.4.2 and 9.SM.4.3.
+
+Options:
+  --pipeline-id TEXT              Unique identifier for this instance of the
+                                  module.  [required]
+  --output-gslr-file TEXT         Path to write output global SLR file.
+                                  [required]
+  --climate-data-file TEXT        NetCDF4/HDF5 file containing surface
+                                  temperature data.  [required]
+  --expansion-coefficients-file TEXT
+                                  Path to NetCDF file containing expansion
+                                  coefficients.  [required]
+  --gsat-rmses-file TEXT          Path to NetCDF file containing GSAT RMSEs.
+                                  [required]
+  --scenario TEXT                 SSP scenario (i.e ssp585) or temperature
+                                  target (i.e. tlim2.0win0.25).
+  --baseyear INTEGER              Base year to which projections are centered.
+  --pyear-start INTEGER           Year for which projections start.
+  --pyear-end INTEGER             Year for which projections end.
+  --pyear-step INTEGER RANGE      Step size in years between start and end at
+                                  which projections are produced.  [x>=1]
+  --nsamps INTEGER                Number of samples to generate.
+  --seed INTEGER                  Seed value for random number generator.
+  --help                          Show this message and exit.
+
+```
+
+See this help documentation by running:
+
+```shell
+docker run --rm ghcr.io/stcaf-org/tlm-sterodynamics:0.1.0 --help
+```
+
+These options and configurations can also be set with environment variables prefixed by TLM_STERODYNAMICS_*. For example, set --gsat-rmses-file as an environment variable with TLM_STERODYNAMICS_GSAT_RMSES_FILE.
+
+## Building the container locally
+
+You can build the container with Docker by cloning the repository locally and then running
+
+```shell
+docker build -t tlm-sterodynamics:dev .
+```
+
+from the repository root.
+
+## Support
+
+Source code is available online at https://github.com/stcaf-org/tlm-sterodynamics. This software is open source, available under the MIT license.
+
+Please file issues in the issue tracker at https://github.com/stcaf-org/tlm-sterodynamics/issues.
