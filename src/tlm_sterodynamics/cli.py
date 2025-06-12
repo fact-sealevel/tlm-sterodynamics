@@ -13,7 +13,7 @@ from tlm_sterodynamics.tlm_sterodynamics_fit_thermalexpansion import (
 from tlm_sterodynamics.tlm_sterodynamics_project import tlm_project_thermalexpansion
 
 
-@click.command(help="Project thermal-expansion contribution to sea-level rise")
+@click.command
 @click.option(
     "--pipeline-id",
     envvar="TLM_STERODYNAMICS_PIPELINE_ID",
