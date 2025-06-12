@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tlm-sterodynamics = "tlm_sterodynamics:cli.tlm_sterodynamics_cli"
+tlm-sterodynamics = "tlm_sterodynamics:cli.main"
 
 [build-system]
 requires = ["hatchling"]
