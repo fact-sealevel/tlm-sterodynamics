@@ -1,0 +1,30 @@
+[project]
+name = "tlm-sterodynamics"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Brewster Malevich", email = "bmalevich@rhg.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "cftime>=1.6.4.post1",
+    "click>=8.2.1",
+    "h5py>=3.13.0",
+    "netcdf4>=1.7.2",
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+    "xarray>=2025.4.0",
+]
+
+[project.scripts]
+tlm-sterodynamics = "tlm_sterodynamics:cli.main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.12",
+]
