@@ -11,6 +11,13 @@ from tlm_sterodynamics.tlm_sterodynamics_fit_thermalexpansion import (
     tlm_fit_thermalexpansion,
 )
 from tlm_sterodynamics.tlm_sterodynamics_project import tlm_project_thermalexpansion
+from tlm_sterodynamics.tlm_sterodynamics_preprocess_oceandynamics import (
+    tlm_preprocess_oceandynamics,
+)
+from tlm_sterodynamics.tlm_sterodynamics_fit_oceandynamics import tlm_fit_oceandynamics
+from tlm_sterodynamics.tlm_sterodynamics_postprocess import (
+    tlm_postprocess_oceandynamics,
+)
 
 
 @click.command
@@ -24,6 +31,13 @@ from tlm_sterodynamics.tlm_sterodynamics_project import tlm_project_thermalexpan
     "--output-gslr-file",
     envvar="TLM_STERODYNAMICS_OUTPUT_GSLR_FILE",
     help="Path to write output global SLR file.",
+    required=True,
+    type=str,
+)
+@click.option(
+    "--output-lslr-file",
+    envvar="TLM_STERODYNAMICS_OUTPUT_LSLR_FILE",
+    help="Path to write output local SLR file.",
     required=True,
     type=str,
 )
@@ -49,10 +63,42 @@ from tlm_sterodynamics.tlm_sterodynamics_project import tlm_project_thermalexpan
     required=True,
 )
 @click.option(
+    "--location-file",
+    envvar="TLM_STERODYNAMICS_LOCATION_FILE",
+    help="File containing name, id, lat, and lon of points for localization.",
+    type=str,
+    required=True,
+)
+@click.option(
+    "--model-dir",
+    envvar="TLM_STERODYNAMICS_MODEL_DIR",
+    help="Directory containing ZOS/ZOSTOGA CMIP6 GCM output.",
+    type=str,
+    required=True,
+)
+@click.option(
     "--scenario",
     envvar="TLM_STERODYNAMICS_SCENARIO",
     help="SSP scenario (i.e ssp585) or temperature target (i.e. tlim2.0win0.25).",
     default="rcp85",
+)
+@click.option(
+    "--scenario-dsl",
+    envvar="TLM_STERODYNAMICS_SCENARIO_DSL",
+    help="SSP scenario to use for correlation of thermal expansion and dynamic sea level, if not the same as scenario.",
+    default="",
+)
+@click.option(
+    "--no-drift-corr",
+    envvar="TLM_STERODYNAMICS_NO_DRIFT_CORR",
+    help="Do not apply the drift correction.",
+    default=False,
+)
+@click.option(
+    "--no-correlation",
+    envvar="TLM_STERODYNAMICS_NO_CORRELATION",
+    help="Do not apply the correlation between ZOS and ZOSTOGA fields.",
+    default=False,
 )
 @click.option(
     "--baseyear",
@@ -91,36 +137,78 @@ from tlm_sterodynamics.tlm_sterodynamics_project import tlm_project_thermalexpan
     help="Seed value for random number generator.",
     default=1234,
 )
+@click.option(
+    "--chunksize",
+    envvar="TLM_STERODYNAMICS_CHUNKSIZE",
+    help="Number of locations to process at a time [default=50].",
+    default=50,
+)
+@click.option(
+    "--keep-temp",
+    envvar="TLM_STERODYNAMICS_KEEP_TEMP",
+    help="Keep the temporary files?",
+    default=False,
+)
 def main(
     pipeline_id,
     climate_data_file,
     expansion_coefficients_file,
     gsat_rmses_file,
+    location_file,
+    model_dir,
     scenario,
+    scenario_dsl,
+    no_drift_corr,
+    no_correlation,
     baseyear,
     pyear_start,
     pyear_end,
     pyear_step,
     nsamps,
     seed,
+    chunksize,
     output_gslr_file,
+    output_lslr_file,
+    keep_temp,
 ) -> None:
     """
     Application producing thermal expansion and dynamic sea level projections. Thermal expansion is derived from inputted surface air temperature and ocean heat content projections provided from a climate model emulator. Dynamic sea level is estimated based on the correlation between thermal expansion and local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1 9.SM.4.2 and 9.SM.4.3.
     """
     click.echo("Hello from tlm-sterodynamics!")
 
-    processed_data = tlm_preprocess_thermalexpansion(
+    te_pre_data = tlm_preprocess_thermalexpansion(
         scenario,
         pipeline_id,
         climate_data_file,
         expansion_coefficients_file,
         gsat_rmses_file,
     )
-    fit_data = tlm_fit_thermalexpansion(processed_data)
-    _ = tlm_project_thermalexpansion(
-        processed_data,
-        fit_data,
+
+    if scenario_dsl == "":
+        scenario_dsl = scenario
+
+    od_config, od_zostoga, od_zos = tlm_preprocess_oceandynamics(
+        scenario,
+        model_dir,
+        no_drift_corr,
+        no_correlation,
+        pyear_start,
+        pyear_end,
+        pyear_step,
+        location_file,
+        baseyear,
+        pipeline_id,
+    )
+
+    te_fit_data = tlm_fit_thermalexpansion(te_pre_data)
+
+    _, od_oceandynamics_fit = tlm_fit_oceandynamics(
+        od_config, od_zostoga, od_zos, pipeline_id
+    )
+
+    te_projections = tlm_project_thermalexpansion(
+        te_pre_data,
+        te_fit_data,
         seed,
         nsamps,
         pipeline_id,
@@ -130,4 +218,17 @@ def main(
         pyear_step,
         baseyear,
         output_gslr_file,
+    )
+
+    tlm_postprocess_oceandynamics(
+        od_config,
+        od_zos,
+        od_oceandynamics_fit,
+        te_projections,
+        nsamps,
+        seed,
+        chunksize,
+        keep_temp,
+        pipeline_id,
+        output_lslr_file,
     )

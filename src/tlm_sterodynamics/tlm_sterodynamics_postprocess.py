@@ -1,11 +1,9 @@
 import numpy as np
-import pickle
 import os
 import time
 import argparse
 from scipy.stats import norm
 from scipy.stats import t
-from netCDF4 import Dataset
 
 import xarray as xr
 
@@ -27,88 +25,41 @@ and the post-processing stage when run within FACTS.
 """
 
 
-def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeline_id):
-    # Read in the configuration -----------------------------------
-    infile = "{}_config.pkl".format(pipeline_id)
-    try:
-        f = open(infile, "rb")
-    except:
-        print("Cannot open infile\n")
-        raise
-
-    # Extract the data from the file
-    my_data = pickle.load(f)
-    f.close()
-
+def tlm_postprocess_oceandynamics(
+    my_config,
+    my_zos,
+    my_od_fit,
+    my_te_projections,
+    nsamps,
+    rng_seed,
+    chunksize,
+    keep_temp,
+    pipeline_id,
+    output_lslr_file,
+):
     # Extract the relevant data
-    targyears = my_data["targyears"]
-    scenario = my_data["scenario"]
-    baseyear = my_data["baseyear"]
-    GCMprobscale = my_data["GCMprobscale"]
-    no_correlation = my_data["no_correlation"]
+    targyears = my_config["targyears"]
+    scenario = my_config["scenario"]
+    baseyear = my_config["baseyear"]
+    GCMprobscale = my_config["GCMprobscale"]
+    no_correlation = my_config["no_correlation"]
 
     # Read in the ZOS data file ------------------------------------
-    infile = "{}_ZOS.pkl".format(pipeline_id)
-    try:
-        f = open(infile, "rb")
-    except:
-        print("Cannot open infile\n")
-        raise
 
-    # Extract the data from the file
-    my_data = pickle.load(f)
-    f.close()
-
-    site_ids = my_data["focus_site_ids"]
-    site_lats = my_data["focus_site_lats"]
-    site_lons = my_data["focus_site_lons"]
-    zos_modellist = my_data["zos_modellist"]
-    zos_scenariolist = my_data["zos_scenariolist"]
-
-    # Read in the TE fit data file --------------------------------
-    infile = "{}_thermalexp_fit.pkl".format(pipeline_id)
-    try:
-        f = open(infile, "rb")
-    except:
-        print("Cannot open infile\n")
-        raise
-
-    # Extract the data from the file
-    my_data = pickle.load(f)
-    f.close()
+    site_ids = my_zos["focus_site_ids"]
+    site_lats = my_zos["focus_site_lats"]
+    site_lons = my_zos["focus_site_lons"]
 
     # Read in the OD fit data file --------------------------------
-    infile = "{}_oceandynamics_fit.pkl".format(pipeline_id)
-    try:
-        f = open(infile, "rb")
-    except:
-        print("Cannot open infile\n")
-        raise
 
-    # Extract the data from the file
-    my_data = pickle.load(f)
-    f.close()
-
-    OceanDynYears = my_data["OceanDynYears"]
-    OceanDynMean = my_data["OceanDynMean"]
-    OceanDynStd = my_data["OceanDynStd"]
-    OceanDynN = my_data["OceanDynN"]
-    OceanDynTECorr = my_data["OceanDynTECorr"]
-    OceanDynDOF = my_data["OceanDynDOF"]
+    OceanDynYears = my_od_fit["OceanDynYears"]
+    OceanDynMean = my_od_fit["OceanDynMean"]
+    OceanDynStd = my_od_fit["OceanDynStd"]
+    OceanDynTECorr = my_od_fit["OceanDynTECorr"]
+    OceanDynDOF = my_od_fit["OceanDynDOF"]
 
     # Read in the TE projections data file ------------------------
-    infile = "{}_projections.pkl".format(pipeline_id)
-    try:
-        f = open(infile, "rb")
-    except:
-        print("Cannot open infile\n")
-        raise
-
-    # Extract the data from the file
-    my_data = pickle.load(f)
-    f.close()
-
-    tesamps = my_data["thermsamps"]
+    tesamps = my_te_projections["thermsamps"]
 
     # Evenly sample quantile space and permutate
     quantile_samps = np.linspace(0, 1, nsamps + 2)[1 : (nsamps + 1)]
@@ -222,7 +173,7 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
 
     # Write the combined data out to the final netcdf file
     combined.to_netcdf(
-        "{0}_localsl.nc".format(pipeline_id),
+        output_lslr_file,
         encoding={
             "sea_level_change": {
                 "dtype": "f4",
@@ -234,73 +185,11 @@ def tlm_postprocess_oceandynamics(nsamps, rng_seed, chunksize, keep_temp, pipeli
     )
 
     # Remove the temporary files
-    if keep_temp == 0:
+    if keep_temp:
         for i in np.arange(0, nsites, chunksize):
             os.remove(
                 "{0}_tempsamps_{1:05d}.nc".format(pipeline_id, int(i / chunksize))
             )
-
-    # Produce the intermediate data output netCDF file =========================
-
-    # Produce the included model string
-    model_string_pieces = [
-        "{0}-{1}".format(zos_modellist[x], zos_scenariolist[x])
-        for x in np.arange(len(zos_modellist))
-    ]
-    model_string = "Models and scenarios included: " + ", ".join(model_string_pieces)
-
-    # Write the localized projections to a netcdf file
-    rootgrp = Dataset(
-        os.path.join(os.path.dirname(__file__), "{}_OceanDyn.nc".format(pipeline_id)),
-        "w",
-        format="NETCDF4",
-    )
-
-    # Define Dimensions
-    _ = rootgrp.createDimension("nsites", nsites)
-    _ = rootgrp.createDimension("OceanDynYears", len(OceanDynYears))
-
-    # Populate dimension variables
-    lat_var = rootgrp.createVariable("lat", "f4", ("nsites",))
-    lon_var = rootgrp.createVariable("lon", "f4", ("nsites",))
-    id_var = rootgrp.createVariable("id", "i4", ("nsites",))
-    odyear_var = rootgrp.createVariable("OceanDynYears", "i4", ("OceanDynYears",))
-
-    # Create a data variable
-    oceandynmean = rootgrp.createVariable(
-        "OceanDynMean", "f4", ("nsites", "OceanDynYears")
-    )
-    oceandynstd = rootgrp.createVariable(
-        "OceanDynStd", "f4", ("nsites", "OceanDynYears")
-    )
-    oceandynn = rootgrp.createVariable("OceanDynN", "i4", ("nsites", "OceanDynYears"))
-    oceandyntecorr = rootgrp.createVariable(
-        "OceanDynTECorr", "f4", ("nsites", "OceanDynYears")
-    )
-    oceandyndof = rootgrp.createVariable(
-        "OceanDynDOF", "i4", ("nsites", "OceanDynYears")
-    )
-
-    # Assign attributes
-    rootgrp.description = "Ocean Dynamics intermediate data for the TLM workflow"
-    rootgrp.history = "Created " + time.ctime(time.time())
-    rootgrp.source = "FACTS: {0} - {1}. ".format(pipeline_id, scenario) + model_string
-    lat_var.units = "Degrees North"
-    lon_var.units = "Degrees East"
-
-    # Put the data into the netcdf variables
-    lat_var[:] = site_lats
-    lon_var[:] = site_lons
-    id_var[:] = site_ids
-    odyear_var[:] = OceanDynYears
-    oceandynmean[:, :] = OceanDynMean.T
-    oceandynstd[:, :] = OceanDynStd.T
-    oceandynn[:, :] = OceanDynN.T
-    oceandyntecorr[:, :] = OceanDynTECorr.T
-    oceandyndof[:, :] = OceanDynDOF.T
-
-    # Close the netcdf
-    rootgrp.close()
 
     return None
 
