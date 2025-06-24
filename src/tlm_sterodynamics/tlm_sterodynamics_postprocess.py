@@ -185,7 +185,7 @@ def tlm_postprocess_oceandynamics(
     )
 
     # Remove the temporary files
-    if keep_temp:
+    if not keep_temp:
         for i in np.arange(0, nsites, chunksize):
             os.remove(
                 "{0}_tempsamps_{1:05d}.nc".format(pipeline_id, int(i / chunksize))
