@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import sys
-import pickle
 import argparse
 
 """ tlm_fit_oceandynamics.py
@@ -15,48 +14,12 @@ pipeline_id = Unique identifier for the pipeline running this code
 """
 
 
-def tlm_fit_oceandynamics(pipeline_id):
-    # Load the configuration file
-    configfile = "{}_config.pkl".format(pipeline_id)
-    try:
-        f = open(configfile, "rb")
-    except Exception as e:
-        print("Cannot open configuration file\n")
-        raise e
-
-    # Extract the configuration variables
-    my_config = pickle.load(f)
-    f.close()
-
+def tlm_fit_oceandynamics(my_config, my_zostoga, my_zos, pipeline_id):
     datayears = my_config["datayears"]
     no_correlation = my_config["no_correlation"]
     maxDOF = my_config["maxDOF"]
 
-    # Load the ZOSTOGA file
-    zostogafile = "{}_ZOSTOGA.pkl".format(pipeline_id)
-    try:
-        f = open(zostogafile, "rb")
-    except Exception as e:
-        print("Cannot open ZOSTOGA file\n")
-        raise e
-
-    # Extract the ZOSTOGA variables
-    my_zostoga = pickle.load(f)
-    f.close()
-
     sZOSTOGA = my_zostoga["sZOSTOGA"]
-
-    # Load the ZOS file
-    zosfile = "{}_ZOS.pkl".format(pipeline_id)
-    try:
-        f = open(zosfile, "rb")
-    except Exception as e:
-        print("Cannot open ZOS file\n")
-        raise e
-
-    # Extract the ZOS variables
-    my_zos = pickle.load(f)
-    f.close()
 
     sZOS = my_zos["sZOS"]
     sZOSTOGAadj = my_zos["sZOSTOGAadj"]
@@ -157,21 +120,13 @@ def tlm_fit_oceandynamics(pipeline_id):
     ThermExpDOF[ThermExpDOF < 1] = 1
 
     # Store the thermal expansion variables in a pickle
-    output = {
+    output_thermalexp_fit = {
         "ThermExpMean": ThermExpMean,
         "ThermExpStd": ThermExpStd,
         "ThermExpYears": ThermExpYears,
         "ThermExpN": ThermExpN,
         "ThermExpDOF": ThermExpDOF,
     }
-    outfile = open(
-        os.path.join(
-            os.path.dirname(__file__), "{}_thermalexp_fit.pkl".format(pipeline_id)
-        ),
-        "wb",
-    )
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
 
     # -------------------- Begin Ocean Dynamics -------------------------------------------
 
@@ -296,7 +251,7 @@ def tlm_fit_oceandynamics(pipeline_id):
     OceanDynDOF[OceanDynDOF < 1] = 1
 
     # Store the ocean dynamics variables in a pickle
-    output = {
+    output_oceandynamics_fit = {
         "OceanDynMean": OceanDynMean,
         "OceanDynStd": OceanDynStd,
         "OceanDynDOF": OceanDynDOF,
@@ -304,14 +259,8 @@ def tlm_fit_oceandynamics(pipeline_id):
         "OceanDynN": OceanDynN,
         "OceanDynTECorr": OceanDynTECorr,
     }
-    outfile = open(
-        os.path.join(
-            os.path.dirname(__file__), "{}_oceandynamics_fit.pkl".format(pipeline_id)
-        ),
-        "wb",
-    )
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
+
+    return output_thermalexp_fit, output_oceandynamics_fit
 
 
 if __name__ == "__main__":

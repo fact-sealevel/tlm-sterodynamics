@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import os
 import sys
 import re
@@ -248,7 +247,7 @@ def tlm_preprocess_oceandynamics(
         )
 
     # Store the configuration in a pickle
-    output = {
+    output_config = {
         "datayears": datayears,
         "scenario": scenario,
         "targyears": targyears,
@@ -261,23 +260,12 @@ def tlm_preprocess_oceandynamics(
         "no_correlation": no_correlation,
     }
 
-    # Write the configuration to a file
-    outdir = os.path.dirname(__file__)
-    outfile = open(os.path.join(outdir, "{}_config.pkl".format(pipeline_id)), "wb")
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
-
     # Store the ZOSTOGA variables in a pickle
-    output = {
+    output_zostoga = {
         "sZOSTOGA": sZOSTOGA,
         "zostoga_modellist": zostoga_modellist,
         "zostoga_scenariolist": zostoga_scenariolist,
     }
-
-    # Write the ZOSTOGA variables to a file
-    outfile = open(os.path.join(outdir, "{}_ZOSTOGA.pkl".format(pipeline_id)), "wb")
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
 
     # ------------ Begin Ocean Dynamics ---------------------------------------------------
 
@@ -345,7 +333,7 @@ def tlm_preprocess_oceandynamics(
     )
 
     # Store the ZOS variable in a pickle
-    output = {
+    output_zos = {
         "sZOS": sZOS,
         "zos_modellist": zos_modellist,
         "zos_scenariolist": zos_scenariolist,
@@ -357,10 +345,7 @@ def tlm_preprocess_oceandynamics(
         "comb_modellist": comb_modellist,
     }
 
-    # Write the ZOS variables to a file
-    outfile = open(os.path.join(outdir, "{}_ZOS.pkl".format(pipeline_id)), "wb")
-    pickle.dump(output, outfile, protocol=4)
-    outfile.close()
+    return output_config, output_zostoga, output_zos
 
 
 if __name__ == "__main__":
