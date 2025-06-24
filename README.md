@@ -15,6 +15,9 @@ First, create a new directory and download required input data and prepare for t
 # Input data we will pass to the container
 mkdir -p ./data/input
 curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_preprocess_data.tgz | tar -zx -C ./data/input
+curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_cmip6_data.tgz | tar -zx -c ./data/input
+
+echo "New_York	12	40.70	-74.01" > ./data/input/location.lst
 
 # Output projections will appear here
 mkdir -p ./data/output
@@ -28,12 +31,15 @@ Now run the container, for example with Docker, like
 docker run --rm \
   -v ./data/input:/input/:ro \
   -v ./data/output:/output \
-  ghcr.io/stcaf-org/tlm-sterodynamics:0.1.0 \
+  ghcr.io/stcaf-org/tlm-sterodynamics:0.2.0 \
   --pipeline-id=1234 \
   --scenario="ssp585" \
   --nsamps=10 \
   --output-gslr-file="/output/gslr.nc" \
+  --output-lslr-file="/output/lslr.nc" \
   --climate-data-file="/input/climate.nc" \
+  --location-file="/input/location.lst" \
+  --model-dir="/input/cmip6/" \
   --expansion-coefficients-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n18_expcoefs.nc" \
   --gsat-rmses-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n17_gsat_rmse.nc"
 ```
@@ -59,6 +65,8 @@ Options:
                                   module.  [required]
   --output-gslr-file TEXT         Path to write output global SLR file.
                                   [required]
+  --output-lslr-file TEXT         Path to write output local SLR file.
+                                  [required]
   --climate-data-file TEXT        NetCDF4/HDF5 file containing surface
                                   temperature data.  [required]
   --expansion-coefficients-file TEXT
@@ -66,8 +74,18 @@ Options:
                                   coefficients.  [required]
   --gsat-rmses-file TEXT          Path to NetCDF file containing GSAT RMSEs.
                                   [required]
+  --location-file TEXT            File containing name, id, lat, and lon of
+                                  points for localization.  [required]
+  --model-dir TEXT                Directory containing ZOS/ZOSTOGA CMIP6 GCM
+                                  output.  [required]
   --scenario TEXT                 SSP scenario (i.e ssp585) or temperature
                                   target (i.e. tlim2.0win0.25).
+  --scenario-dsl TEXT             SSP scenario to use for correlation of
+                                  thermal expansion and dynamic sea level, if
+                                  not the same as scenario.
+  --no-drift-corr BOOLEAN         Do not apply the drift correction.
+  --no-correlation BOOLEAN        Do not apply the correlation between ZOS and
+                                  ZOSTOGA fields.
   --baseyear INTEGER              Base year to which projections are centered.
   --pyear-start INTEGER           Year for which projections start.
   --pyear-end INTEGER             Year for which projections end.
@@ -75,14 +93,16 @@ Options:
                                   which projections are produced.  [x>=1]
   --nsamps INTEGER                Number of samples to generate.
   --seed INTEGER                  Seed value for random number generator.
+  --chunksize INTEGER             Number of locations to process at a time
+                                  [default=50].
+  --keep-temp BOOLEAN             Keep the temporary files?
   --help                          Show this message and exit.
-
-```
+ ```
 
 See this help documentation by running:
 
 ```shell
-docker run --rm ghcr.io/stcaf-org/tlm-sterodynamics:0.1.0 --help
+docker run --rm ghcr.io/stcaf-org/tlm-sterodynamics:0.2.0 --help
 ```
 
 These options and configurations can also be set with environment variables prefixed by TLM_STERODYNAMICS_*. For example, set --gsat-rmses-file as an environment variable with TLM_STERODYNAMICS_GSAT_RMSES_FILE.
