@@ -181,7 +181,7 @@ def main(
         scenario_dsl = scenario
 
     od_config, od_zostoga, od_zos = tlm_preprocess_oceandynamics(
-        scenario,
+        scenario_dsl,
         model_dir,
         no_drift_corr,
         no_correlation,
