@@ -95,7 +95,6 @@ Options:
   --seed INTEGER                  Seed value for random number generator.
   --chunksize INTEGER             Number of locations to process at a time
                                   [default=50].
-  --keep-temp BOOLEAN             Keep the temporary files?
   --help                          Show this message and exit.
  ```
 
@@ -106,6 +105,8 @@ docker run --rm ghcr.io/stcaf-org/tlm-sterodynamics:0.2.0 --help
 ```
 
 These options and configurations can also be set with environment variables prefixed by TLM_STERODYNAMICS_*. For example, set --gsat-rmses-file as an environment variable with TLM_STERODYNAMICS_GSAT_RMSES_FILE.
+
+The program will take advantage of all available CPU cores to run faster, project local ocean dynamics in parallel across batches of locations. You can control the size of these baches with `--chunksize`. Using larger batches will generally speed up calculation but also increase memory use. The default setting is sensible if you are projecting samples on the magnitude of 10,000s samples or less. When run as a container, you can throttle the program's access to CPU cores. With `docker run` this done with the `--cpus` flag.
 
 ## Building the container locally
 

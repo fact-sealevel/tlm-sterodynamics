@@ -143,12 +143,6 @@ from tlm_sterodynamics.tlm_sterodynamics_postprocess import (
     help="Number of locations to process at a time [default=50].",
     default=50,
 )
-@click.option(
-    "--keep-temp",
-    envvar="TLM_STERODYNAMICS_KEEP_TEMP",
-    help="Keep the temporary files?",
-    default=False,
-)
 def main(
     pipeline_id,
     climate_data_file,
@@ -169,7 +163,6 @@ def main(
     chunksize,
     output_gslr_file,
     output_lslr_file,
-    keep_temp,
 ) -> None:
     """
     Application producing thermal expansion and dynamic sea level projections. Thermal expansion is derived from inputted surface air temperature and ocean heat content projections provided from a climate model emulator. Dynamic sea level is estimated based on the correlation between thermal expansion and local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1 9.SM.4.2 and 9.SM.4.3.
@@ -188,7 +181,7 @@ def main(
         scenario_dsl = scenario
 
     od_config, od_zostoga, od_zos = tlm_preprocess_oceandynamics(
-        scenario,
+        scenario_dsl,
         model_dir,
         no_drift_corr,
         no_correlation,
@@ -228,7 +221,5 @@ def main(
         nsamps,
         seed,
         chunksize,
-        keep_temp,
-        pipeline_id,
         output_lslr_file,
     )

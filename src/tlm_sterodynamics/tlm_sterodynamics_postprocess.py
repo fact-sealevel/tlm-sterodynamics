@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import time
 import argparse
 from scipy.stats import norm
@@ -33,8 +32,6 @@ def tlm_postprocess_oceandynamics(
     nsamps,
     rng_seed,
     chunksize,
-    keep_temp,
-    pipeline_id,
     output_lslr_file,
 ):
     # Extract the relevant data
@@ -44,154 +41,100 @@ def tlm_postprocess_oceandynamics(
     GCMprobscale = my_config["GCMprobscale"]
     no_correlation = my_config["no_correlation"]
 
-    # Read in the ZOS data file ------------------------------------
-
-    site_ids = my_zos["focus_site_ids"]
-    site_lats = my_zos["focus_site_lats"]
-    site_lons = my_zos["focus_site_lons"]
-
-    # Read in the OD fit data file --------------------------------
-
-    OceanDynYears = my_od_fit["OceanDynYears"]
-    OceanDynMean = my_od_fit["OceanDynMean"]
-    OceanDynStd = my_od_fit["OceanDynStd"]
-    OceanDynTECorr = my_od_fit["OceanDynTECorr"]
-    OceanDynDOF = my_od_fit["OceanDynDOF"]
-
     # Read in the TE projections data file ------------------------
-    tesamps = my_te_projections["thermsamps"]
+    te_samps = xr.DataArray(
+        my_te_projections["thermsamps"],
+        dims=("samples", "years"),
+        coords=(np.arange(nsamps), targyears),
+    )
 
     # Evenly sample quantile space and permutate
     quantile_samps = np.linspace(0, 1, nsamps + 2)[1 : (nsamps + 1)]
     rng = np.random.default_rng(rng_seed)
     quantile_samps = rng.permutation(quantile_samps)
-
-    # Get the number of locations
-    nsites = len(site_ids)
+    q = xr.DataArray(quantile_samps, dims=["samples"], coords=[np.arange(nsamps)])
 
     # Determine the thermal expansion scale coefficient
     ThermExpScale = norm.ppf(0.95) / norm.ppf(GCMprobscale)
 
-    # Find which index targyear is located in the OD and TE years
-    od_year_ind = np.array([np.argmin(np.abs(OceanDynYears - x)) for x in targyears])[
-        :, np.newaxis
-    ]
+    # Note the selection and chunking at the end. This is selecting target
+    # years only, must match years in thermal expansion samples data.
+    # Chunking turns the databackend to dask arrays to handle
+    # larger-than-memory data.
+    od_fit = (
+        xr.Dataset(
+            {
+                "od_mean": (("years", "locations"), my_od_fit["OceanDynMean"]),
+                "od_std": (("years", "locations"), my_od_fit["OceanDynStd"]),
+                "od_tecorr": (("years", "locations"), my_od_fit["OceanDynTECorr"]),
+                "od_dof": (("years", "locations"), my_od_fit["OceanDynDOF"]),
+                "lat": (["locations"], my_zos["focus_site_lats"]),
+                "lon": (["locations"], my_zos["focus_site_lons"]),
+            },
+            coords={
+                "years": my_od_fit["OceanDynYears"],
+                "locations": my_zos["focus_site_ids"],
+            },
+        )
+        .sel(years=targyears)
+        .chunk({"locations": chunksize})
+    )
 
-    # Define the missing value for the netCDF files
-    nc_missing_value = np.nan  # np.iinfo(np.int16).min
+    # Calculate the conditional mean and std dev if correlation is needed
+    if no_correlation:
+        condmean = od_fit["od_mean"]
+        condstd = ThermExpScale * od_fit["od_std"]
+    else:
+        condmean = od_fit["od_mean"] + od_fit["od_std"] * od_fit["od_tecorr"] * (
+            (te_samps - te_samps.mean(dim="samples")) / te_samps.std(dim="samples")
+        )
+        condstd = (
+            ThermExpScale * od_fit["od_std"] * np.sqrt(1 - od_fit["od_tecorr"] ** 2)
+        )
 
-    # Create the xarray data structures for the localized projections
-    ncvar_attributes = {
+    # Use `t.ppf()' to get ocean dynamic samples but it needs to work on
+    # chunked, dask-backed xarray Datasets/Arrays because the data we're
+    # working with is potentially larger than memory.
+    # We apply `constd` and `condmean` directly rather than use t.ppf()'s
+    # "loc" and "scale" args because this appears to scale and handle
+    # multiple chunked dimensions a bit more easily.
+    od_samps = (
+        xr.apply_ufunc(
+            lambda q, dof: t.ppf(q, dof),
+            q,
+            od_fit["od_dof"],
+            vectorize=True,
+            input_core_dims=[["samples"], []],
+            output_core_dims=[["samples"]],
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+        * condstd
+        + condmean
+    )
+
+    samps = od_samps + te_samps
+
+    samps.name = "sea_level_change"
+    samps.attrs = {"units": "mm"}
+    samps = samps.to_dataset()
+    samps.attrs = {
         "description": "Local SLR contributions from thermal expansion and dynamic sea-level according to Kopp 2014 CMIP6/TLM workflow",
         "history": "Created " + time.ctime(time.time()),
         "source": "SLR Framework: Kopp 2014 CMIP6/TLM workflow",
         "scenario": scenario,
         "baseyear": baseyear,
     }
+    # ∵ lat and lon were variables, not coords, in original code.
+    samps["lat"] = od_fit["lat"]
+    samps["lon"] = od_fit["lon"]
 
-    # Loop over the chunks of samples
-    for i in np.arange(0, nsites, chunksize):
-        # This chunk's temporary file name
-        temp_filename = "{0}_tempsamps_{1:05d}.nc".format(
-            pipeline_id, int(i / chunksize)
-        )
+    # Casting down to float32 because this data can be very large.
+    # Casting float64 -> float32 reduces size by half and don't need
+    # extra precision anyways.
+    samps = samps.astype("float32")
 
-        # If this temporary file exists, move on to the next chunk
-        if os.path.isfile(temp_filename):
-            print("{} found, skipping to next chunk".format(temp_filename))
-            continue
-
-        # Get the sample indices
-        top_idx = np.amin([i + chunksize, nsites])
-        site_idx = np.arange(i, top_idx)[np.newaxis, :]
-
-        # Calculate the conditional mean and std dev if correlation is needed
-        if no_correlation:
-            condmean = OceanDynMean[od_year_ind, site_idx]
-            condstd = ThermExpScale * OceanDynStd[od_year_ind, site_idx]
-        else:
-            condmean = (
-                OceanDynMean[od_year_ind, site_idx]
-                + OceanDynStd[od_year_ind, site_idx]
-                * OceanDynTECorr[od_year_ind, site_idx]
-                * (
-                    (tesamps - np.nanmean(tesamps, axis=0)) / np.nanstd(tesamps, axis=0)
-                )[:, :, np.newaxis]
-            )
-            condstd = (ThermExpScale * OceanDynStd[od_year_ind, site_idx]) * np.sqrt(
-                1 - OceanDynTECorr[od_year_ind, site_idx] ** 2
-            )
-
-        # Generate the samples
-        samps = (
-            t.ppf(
-                quantile_samps[:, np.newaxis, np.newaxis],
-                OceanDynDOF[np.newaxis, od_year_ind, site_idx],
-            )
-            * condstd
-            + condmean
-        )
-        samps += tesamps[:, :, np.newaxis]
-
-        # Generate the output xarray
-        local_out = xr.Dataset(
-            {
-                "sea_level_change": (
-                    ("samples", "years", "locations"),
-                    samps,
-                    {"units": "mm", "missing_value": nc_missing_value},
-                ),
-                "lat": (("locations"), site_lats[site_idx[0, :]]),
-                "lon": (("locations"), site_lons[site_idx[0, :]]),
-            },
-            coords={
-                "years": targyears,
-                "locations": site_ids[site_idx[0, :]],
-                "samples": np.arange(nsamps),
-            },
-            attrs=ncvar_attributes,
-        )
-
-        # Write these samples to a temporary netcdf file
-        local_out.to_netcdf(
-            temp_filename,
-            encoding={
-                "sea_level_change": {
-                    "dtype": "f4",
-                    "zlib": True,
-                    "complevel": 4,
-                    "_FillValue": nc_missing_value,
-                }
-            },
-        )
-
-    # Open the temporary data sets
-    # combined = xr.open_mfdataset("{0}_tempsamps_*.nc".format(pipeline_id), concat_dim="locations", chunks={"locations":chunksize})
-    combined = xr.open_mfdataset(
-        "{0}_tempsamps_*.nc".format(pipeline_id), chunks={"locations": chunksize}
-    )
-
-    # Write the combined data out to the final netcdf file
-    combined.to_netcdf(
-        output_lslr_file,
-        encoding={
-            "sea_level_change": {
-                "dtype": "f4",
-                "zlib": True,
-                "complevel": 4,
-                "_FillValue": nc_missing_value,
-            }
-        },
-    )
-
-    # Remove the temporary files
-    if not keep_temp:
-        for i in np.arange(0, nsites, chunksize):
-            os.remove(
-                "{0}_tempsamps_{1:05d}.nc".format(pipeline_id, int(i / chunksize))
-            )
-
-    return None
+    samps.to_netcdf(output_lslr_file)
 
 
 if __name__ == "__main__":
