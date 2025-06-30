@@ -15,7 +15,7 @@ First, create a new directory and download required input data and prepare for t
 # Input data we will pass to the container
 mkdir -p ./data/input
 curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_preprocess_data.tgz | tar -zx -C ./data/input
-curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_cmip6_data.tgz | tar -zx -c ./data/input
+curl -sL https://zenodo.org/record/7478192/files/tlm_sterodynamics_cmip6_data.tgz | tar -zx -C ./data/input
 
 echo "New_York	12	40.70	-74.01" > ./data/input/location.lst
 
