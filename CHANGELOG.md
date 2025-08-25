@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed bad `--scenario` default argument ([PR#8](https://github.com/stcaf-org/tlm-sterodynamics/pull/8); [@e-marshall](https://github.com/e-marshall)).
+- Fixed bad `--scenario` default argument ([PR#8](https://github.com/stcaf-org/tlm-sterodynamics/pull/8), [@e-marshall](https://github.com/e-marshall)).
 - Fixed typo on input data download command in README example.
 
 
