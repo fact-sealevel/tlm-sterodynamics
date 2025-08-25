@@ -80,7 +80,7 @@ from tlm_sterodynamics.tlm_sterodynamics_postprocess import (
     "--scenario",
     envvar="TLM_STERODYNAMICS_SCENARIO",
     help="SSP scenario (i.e ssp585) or temperature target (i.e. tlim2.0win0.25).",
-    default="rcp85",
+    default="ssp585",
 )
 @click.option(
     "--scenario-dsl",
