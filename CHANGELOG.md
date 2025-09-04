@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added logging system with messages at start and stop of each step.
 
 ## [0.2.1] - 2025-08-25
 
