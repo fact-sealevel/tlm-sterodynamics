@@ -2,6 +2,8 @@
 Logic for the CLI.
 """
 
+import logging
+
 import click
 
 from tlm_sterodynamics.tlm_sterodynamics_preprocess_thermalexpansion import (
@@ -18,6 +20,10 @@ from tlm_sterodynamics.tlm_sterodynamics_fit_oceandynamics import tlm_fit_oceand
 from tlm_sterodynamics.tlm_sterodynamics_postprocess import (
     tlm_postprocess_oceandynamics,
 )
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 @click.command
@@ -143,6 +149,7 @@ from tlm_sterodynamics.tlm_sterodynamics_postprocess import (
     help="Number of locations to process at a time [default=50].",
     default=50,
 )
+@click.option("--debug/--no-debug", default=False, envvar="TLM_STERODYNAMICS_DEBUG")
 def main(
     pipeline_id,
     climate_data_file,
@@ -163,12 +170,19 @@ def main(
     chunksize,
     output_gslr_file,
     output_lslr_file,
+    debug,
 ) -> None:
     """
     Application producing thermal expansion and dynamic sea level projections. Thermal expansion is derived from inputted surface air temperature and ocean heat content projections provided from a climate model emulator. Dynamic sea level is estimated based on the correlation between thermal expansion and local dynamic sea level in the CMIP6 multimodel ensemble. See IPCC AR6 WG1 9.SM.4.2 and 9.SM.4.3.
     """
-    click.echo("Hello from tlm-sterodynamics!")
+    if debug:
+        logging.root.setLevel(logging.DEBUG)
+    else:
+        logging.root.setLevel(logging.INFO)
 
+    logger.info("Starting tlm-sterodynamics")
+
+    logger.info("Starting thermal expansion preprocessing")
     te_pre_data = tlm_preprocess_thermalexpansion(
         scenario,
         pipeline_id,
@@ -176,10 +190,12 @@ def main(
         expansion_coefficients_file,
         gsat_rmses_file,
     )
+    logger.info("Thermal expansion preprocessing complete")
 
     if scenario_dsl == "":
         scenario_dsl = scenario
 
+    logger.info("Starting ocean dynamics preprocessing")
     od_config, od_zostoga, od_zos = tlm_preprocess_oceandynamics(
         scenario_dsl,
         model_dir,
@@ -192,13 +208,19 @@ def main(
         baseyear,
         pipeline_id,
     )
+    logger.info("Ocean dynamics preprocessing complete")
 
+    logger.info("Starting thermal expansion fitting")
     te_fit_data = tlm_fit_thermalexpansion(te_pre_data)
+    logger.info("Thermal expansion fitting complete")
 
+    logger.info("Starting ocean dynamics fitting")
     _, od_oceandynamics_fit = tlm_fit_oceandynamics(
         od_config, od_zostoga, od_zos, pipeline_id
     )
+    logger.info("Ocean dynamics fitting complete")
 
+    logger.info("Starting thermal expansion projection")
     te_projections = tlm_project_thermalexpansion(
         te_pre_data,
         te_fit_data,
@@ -212,7 +234,9 @@ def main(
         baseyear,
         output_gslr_file,
     )
+    logger.info("Thermal expansion projection complete")
 
+    logger.info("Starting ocean dynamics postprocessing")
     tlm_postprocess_oceandynamics(
         od_config,
         od_zos,
@@ -223,3 +247,6 @@ def main(
         chunksize,
         output_lslr_file,
     )
+    logger.info("Ocean dynamics postprocessing complete")
+
+    logger.info("tlm-sterodynamics complete")
