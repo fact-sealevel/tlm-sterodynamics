@@ -98,6 +98,7 @@ Options:
   --seed INTEGER                  Seed value for random number generator.
   --chunksize INTEGER             Number of locations to process at a time
                                   [default=50].
+  --debug / --no-debug
   --help                          Show this message and exit.
  ```
 
