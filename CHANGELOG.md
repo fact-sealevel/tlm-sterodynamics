@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Build multiplatform container images. We're now experimenting with support for linux/arm64, in addition to linux/amd64.
+
 - Added logging system with messages at start and stop of each step ([PR#9](https://github.com/fact-sealevel/tlm-sterodynamics/pull/9), [@brews](https://github.com/brews)).
 
 ### Changed
