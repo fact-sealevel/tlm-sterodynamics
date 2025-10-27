@@ -7,7 +7,7 @@ Application producing thermal expansion and dynamic sea level projections. Therm
 
 ## Example
 
-This application can run on data projected climate data. For example, you can use the output `climate.nc` file from the [the fair model container](https://github.com/stcaf-org/fair-temperature). Additional input data is also needed.
+This application can run on data projected climate data. For example, you can use the output `climate.nc` file from the [the fair model container](https://github.com/fact-sealevel/fair-temperature). Additional input data is also needed.
 
 First, create a new directory and download required input data and prepare for the run, like
 
@@ -31,7 +31,7 @@ Now run the container, for example with Docker, like
 docker run --rm \
   -v ./data/input:/input/:ro \
   -v ./data/output:/output \
-  ghcr.io/stcaf-org/tlm-sterodynamics:0.2.0 \
+  ghcr.io/fact-sealevel/tlm-sterodynamics:latest \
   --pipeline-id=1234 \
   --scenario="ssp585" \
   --nsamps=10 \
@@ -45,6 +45,9 @@ docker run --rm \
 ```
 
 If the run is successful, the output projection will appear in `./data/output`.
+
+> [!TIP]
+> For this example we use `ghcr.io/fact-sealevel/tlm-sterodynamics:latest`. We do not recommend using `latest` for production runs because it will grab the latest release. This means runs will not be reproducible and may include breaking changes. Instead, use a tag for a specific version of the image or an image's digest hash. You can find tagged image versions and digests [here](https://github.com/fact-sealevel/tlm-sterodynamics/pkgs/container/tlm-sterodynamics).
 
 ## Features
 
@@ -101,7 +104,7 @@ Options:
 See this help documentation by running:
 
 ```shell
-docker run --rm ghcr.io/stcaf-org/tlm-sterodynamics:0.2.0 --help
+docker run --rm ghcr.io/fact-sealevel/tlm-sterodynamics:latest --help
 ```
 
 These options and configurations can also be set with environment variables prefixed by TLM_STERODYNAMICS_*. For example, set --gsat-rmses-file as an environment variable with TLM_STERODYNAMICS_GSAT_RMSES_FILE.
@@ -120,6 +123,6 @@ from the repository root.
 
 ## Support
 
-Source code is available online at https://github.com/stcaf-org/tlm-sterodynamics. This software is open source, available under the MIT license.
+Source code is available online at https://github.com/fact-sealevel/tlm-sterodynamics. This software is open source, available under the MIT license.
 
-Please file issues in the issue tracker at https://github.com/stcaf-org/tlm-sterodynamics/issues.
+Please file issues in the issue tracker at https://github.com/fact-sealevel/tlm-sterodynamics/issues.
