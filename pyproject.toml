@@ -10,8 +10,8 @@ requires-python = ">=3.12"
 dependencies = [
     "cftime>=1.6.4.post1",
     "click>=8.2.1",
-    "h5py>=3.13.0",
-    "netcdf4>=1.7.2",
+    "h5py==3.14.0",
+    "netcdf4==1.7.2",
     "numpy>=2.2.6",
     "scipy>=1.15.3",
     "xarray[accel,parallel]>=2025.4.0",
