@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix error when writing NetCDF4 file output by pinning h5py==3.14.0 and netcdf4==1.7.2 ([PR#14](https://github.com/fact-sealevel/tlm-sterodynamics/pull/14), [ @e-marshall](https://github.com/e-marshall)).
 
 
 ## [0.3.0] - 2025-10-27
