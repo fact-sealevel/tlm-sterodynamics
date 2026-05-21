@@ -44,7 +44,7 @@ logging.basicConfig(level=logging.INFO)
     "--output-lslr-file",
     envvar="TLM_STERODYNAMICS_OUTPUT_LSLR_FILE",
     help="Path to write output local SLR file.",
-    required=True,
+    required=False,
     type=str,
 )
 @click.option(
@@ -236,17 +236,20 @@ def main(
     )
     logger.info("Thermal expansion projection complete")
 
-    logger.info("Starting ocean dynamics postprocessing")
-    tlm_postprocess_oceandynamics(
-        od_config,
-        od_zos,
-        od_oceandynamics_fit,
-        te_projections,
-        nsamps,
-        seed,
-        chunksize,
-        output_lslr_file,
-    )
-    logger.info("Ocean dynamics postprocessing complete")
+    if output_lslr_file:
+        logger.info("Starting ocean dynamics postprocessing")
+        tlm_postprocess_oceandynamics(
+            od_config,
+            od_zos,
+            od_oceandynamics_fit,
+            te_projections,
+            nsamps,
+            seed,
+            chunksize,
+            output_lslr_file,
+        )
+        logger.info("Ocean dynamics postprocessing complete")
+    else:
+        logger.info("No output local SLR file provided, skipping ocean dynamics postprocessing")
 
     logger.info("tlm-sterodynamics complete")

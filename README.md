@@ -46,6 +46,24 @@ docker run --rm \
 
 If the run is successful, the output projection will appear in `./data/output`.
 
+The above example will produce both global and localized output projections. You can skip the localization step and only produce global outputs by omitting the `output-lslr-file` input argument:
+
+```shell
+docker run --rm \
+  -v ./data/input:/input/:ro \
+  -v ./data/output:/output \
+  ghcr.io/fact-sealevel/tlm-sterodynamics:latest \
+  --pipeline-id=1234 \
+  --scenario="ssp585" \
+  --nsamps=1000 \
+  --output-gslr-file="/output/gslr.nc" \
+  --climate-data-file="/input/climate.nc" \
+  --location-file="/input/location.lst" \
+  --model-dir="/input/cmip6/" \
+  --expansion-coefficients-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n18_expcoefs.nc" \
+  --gsat-rmses-file="/input/scmpy2LM_RCMIP_CMIP6calpm_n17_gsat_rmse.nc"
+  ```
+
 > [!TIP]
 > For this example we use `ghcr.io/fact-sealevel/tlm-sterodynamics:latest`. We do not recommend using `latest` for production runs because it will grab the latest release. This means runs will not be reproducible and may include breaking changes. Instead, use a tag for a specific version of the image or an image's digest hash. You can find tagged image versions and digests [here](https://github.com/fact-sealevel/tlm-sterodynamics/pkgs/container/tlm-sterodynamics).
 
