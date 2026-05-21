@@ -250,6 +250,8 @@ def main(
         )
         logger.info("Ocean dynamics postprocessing complete")
     else:
-        logger.info("No output local SLR file provided, skipping ocean dynamics postprocessing")
+        logger.info(
+            "No output local SLR file provided, skipping ocean dynamics postprocessing"
+        )
 
     logger.info("tlm-sterodynamics complete")
