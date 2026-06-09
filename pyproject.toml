@@ -1,7 +1,7 @@
 [project]
 name = "tlm-sterodynamics"
-version = "0.3.1"
-description = "Add your description here"
+version = "0.3.2"
+description = "Application producing thermal expansion and dynamic sea level projections."
 readme = "README.md"
 authors = [
     { name = "Brewster Malevich", email = "bmalevich@rhg.com" }
