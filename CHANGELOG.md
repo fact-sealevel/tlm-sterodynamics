@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Change
+
+- Make `output-lslr-file` optional to allow experiments that generate global projections only ([PR #17](https://github.com/fact-sealevel/tlm-sterodynamics/pull/17), [ @e-marshall](https://github.com/e-marshall))
 
 ## [0.3.1] - 2026-01-22
 
